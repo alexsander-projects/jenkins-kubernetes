@@ -4,7 +4,7 @@ Here we will see how to install jenkins on kubernetes, and use it to create pods
 
 We will also create a volume so that we can persist data if the pod is deleted.
 
-![]()
+![](https://github.com/myProjects175/jenkins-kubernetes/blob/72f326370f5153632124550fefa0dea0c9776c9f/images/Architecture.png)
 >`Architecture`
 
 All the `yaml` files used can be found in this repository.
@@ -22,9 +22,6 @@ In this deployment we used:
 ## Kubernetes setup
 
 - First, create an AKS cluster on Azure;
-
-![]()
->`Deployment`
 
 - Now, connect to the kubernetes cluster;
 
@@ -44,7 +41,7 @@ Download cluster credentials
 
 - First create a `serviceAccount.yaml` file:
 
-![]()
+![](https://github.com/myProjects175/jenkins-kubernetes/blob/72f326370f5153632124550fefa0dea0c9776c9f/images/serviceAccount.yaml.png)
 >`serviceAccount.yaml`
 
 Run:
@@ -59,7 +56,7 @@ You can get the worker node hostname with:
 
 `kubectl get nodes`
 
-![]()
+![](https://github.com/myProjects175/jenkins-kubernetes/blob/72f326370f5153632124550fefa0dea0c9776c9f/images/volume.yaml.png)
 >`volume.yaml`
 
 Run:
@@ -68,7 +65,7 @@ Run:
 
 Create a `deployment.yaml` file:
 
-![]()
+![](https://github.com/myProjects175/jenkins-kubernetes/blob/72f326370f5153632124550fefa0dea0c9776c9f/images/deployment.yaml.png)
 >`deployment.yaml`
 
 Run:
@@ -81,7 +78,7 @@ You can get the deployment details with:
 
 Create a `service.yaml` file, this will be of type `LoadBalancer`:
 
-![]()
+![](https://github.com/myProjects175/jenkins-kubernetes/blob/72f326370f5153632124550fefa0dea0c9776c9f/images/volume.yaml.png)
 >`service.yaml`
 
 Create the Jenkins service:
@@ -99,8 +96,6 @@ Create the Jenkins service:
 `kubectl cluster-info`
 
 - Procede with the basic Jenkins configuration;
-
-![]()
 
 - Get the initial password with:
 
@@ -135,5 +130,5 @@ and then:
 
 - The jenkinsfile will create two containers based on docker images, upon running the pipeline, it will spin up pods, run the script, and purge the pods.
 
-![]()
+![](https://github.com/myProjects175/jenkins-kubernetes/blob/72f326370f5153632124550fefa0dea0c9776c9f/images/jenkinsfile.png)
 >`jenkinsfile`
