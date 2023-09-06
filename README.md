@@ -13,11 +13,11 @@ All the `yaml` files used can be found in this repository.
 
 In this deployment we used:
 
-    'securityContext' for Jenkins pod to be able to write to the local persistent volume;
+1. 'securityContext' for Jenkins pod to be able to write to the local persistent volume;
 
-    Liveness and readiness probe to monitor the health of the Jenkins pod;
+2. Liveness and readiness probe to monitor the health of the Jenkins pod;
 
-    Local persistent volume based on local storage class that holds the Jenkins data path '/var/jenkins_home'.
+3. Local persistent volume based on local storage class that holds the Jenkins data path '/var/jenkins_home'.
 
 ## Kubernetes setup
 
