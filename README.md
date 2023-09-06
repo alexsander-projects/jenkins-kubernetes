@@ -27,15 +27,15 @@ In this deployment we used:
 
 To do it using CLI, first log in:
 
-`az login`
+    az login
 
 Set the cluster subscription:
 
-`az account set --subscription <subscription id>`
+    az account set --subscription <subscription id>
 
 Download cluster credentials
 
-`az aks get-credentials --resource-group <resource group name> --name <kubernetes service name>`
+    az aks get-credentials --resource-group <resource group name> --name <kubernetes service name>
 
 - Now setup Jenkins on Kubernetes;
 
@@ -46,7 +46,7 @@ Download cluster credentials
 
 Run:
 
-`kubectl apply -f serviceAccount.yaml`
+    kubectl apply -f serviceAccount.yaml    
 
 - Create a `volume.yaml` file:
 
@@ -54,14 +54,14 @@ Replace `worker-node` with any one of your cluster worker nodes hostname;
 
 You can get the worker node hostname with:
 
-`kubectl get nodes`
+    kubectl get nodes   
 
 ![](https://github.com/myProjects175/jenkins-kubernetes/blob/72f326370f5153632124550fefa0dea0c9776c9f/images/volume.yaml.png)
 >`volume.yaml`
 
 Run:
 
-`kubectl create -f volume.yaml`
+    kubectl create -f volume.yaml   
 
 Create a `deployment.yaml` file:
 
@@ -70,11 +70,11 @@ Create a `deployment.yaml` file:
 
 Run:
 
-`kubectl apply -f deployment.yaml`
+    kubectl apply -f deployment.yaml    
 
 You can get the deployment details with:
 
-`kubectl describe deployments --namespace=<namepace>`
+    kubectl describe deployments --namespace=<namepace> 
 
 Create a `service.yaml` file, this will be of type `LoadBalancer`:
 
@@ -83,28 +83,30 @@ Create a `service.yaml` file, this will be of type `LoadBalancer`:
 
 Create the Jenkins service:
 
-`kubectl apply -f service.yaml`
+    kubectl apply -f service.yaml   
 
 ## Jenkins Configuration
 
 - You can access Jenkins with:
 
-`http://<node-ip>:8080`
+address:
 
-- You can also get the control plane address with:
+    http://<node-ip>:8080
 
-`kubectl cluster-info`
+You can also get the control plane address with:
+
+    kubectl cluster-info    
 
 - Procede with the basic Jenkins configuration;
 
-- Get the initial password with:
+Get the initial password with:
 
-`kubectl get pods --namespace=<namepace>`
+    kubectl get pods --namespace=<namepace> 
 >to get the pod name
 
 and then:
 
-`kubectl logs <pod name> --namespace=<namepace>`
+    kubectl logs <pod name> --namespace=<namepace>  
 
 - Create the admin user and install `kubernetes` plugin;
 
@@ -114,9 +116,11 @@ and then:
 
 - Name it;
 
-- On Kubernetes URL, set the control plane address, you can get it with:
+- On Kubernetes URL,
 
-`kubectl cluster-info`
+set the control plane address, you can get it with:
+
+    kubectl cluster-info    
 
 - Test the connection;
 
