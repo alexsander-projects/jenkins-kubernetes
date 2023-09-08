@@ -109,11 +109,7 @@ Create the Jenkins service:
 
 address:
 
-    http://<node-ip>:8080
-
-You can also get the control plane address with:
-
-    kubectl cluster-info    
+    http://<node-ip>:8080  
 
 - Procede with the basic Jenkins configuration;
 
@@ -145,6 +141,8 @@ set the control plane address, you can get it with:
 - Set the namespace, the one that you used on `serviceAccount.yaml` file;
 
 - Enable `WebSocket`;
+
+- Save.
 
 ## Jenkins job
 
