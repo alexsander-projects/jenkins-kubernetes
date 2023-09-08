@@ -37,9 +37,15 @@ Download cluster credentials
 
     az aks get-credentials --resource-group <resource group name> --name <kubernetes service name>
 
-- Now setup Jenkins on Kubernetes;
+## Setup Jenkins on Kubernetes;
 
-- First create a `serviceAccount.yaml` file:
+- First, create a namespace for jenkins:
+
+run:
+
+    kubectl create namespace <namespace name>
+
+- Create a `serviceAccount.yaml` file:
 
 ![](https://github.com/myProjects175/jenkins-kubernetes/blob/72f326370f5153632124550fefa0dea0c9776c9f/images/serviceAccount.yaml.png)
 >`serviceAccount.yaml`
@@ -51,6 +57,8 @@ Run:
 - Create a `volume.yaml` file:
 
 Replace `worker-node` with any one of your cluster worker nodes hostname;
+
+Also, replace the namespace with your namespace name;
 
 You can get the worker node hostname with:
 
@@ -68,11 +76,19 @@ Create a `deployment.yaml` file:
 ![](https://github.com/myProjects175/jenkins-kubernetes/blob/72f326370f5153632124550fefa0dea0c9776c9f/images/deployment.yaml.png)
 >`deployment.yaml`
 
+Remember to set your namespace name;
+
 Run:
 
-    kubectl apply -f deployment.yaml    
+    kubectl apply -f deployment.yaml
+
+>The deployment will take some time
 
 You can get the deployment details with:
+
+    kubectl get deployments -n <namespace>
+
+and
 
     kubectl describe deployments --namespace=<namepace> 
 
@@ -80,6 +96,8 @@ Create a `service.yaml` file, this will be of type `LoadBalancer`:
 
 ![](https://github.com/myProjects175/jenkins-kubernetes/blob/72f326370f5153632124550fefa0dea0c9776c9f/images/volume.yaml.png)
 >`service.yaml`
+
+Remember to set your namespace name;
 
 Create the Jenkins service:
 
