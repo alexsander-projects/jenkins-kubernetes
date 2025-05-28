@@ -162,7 +162,6 @@ This section details deploying Jenkins using the provided Kubernetes YAML manife
     ```
     Wait for an external IP to be assigned. Once available, open `http://<external-ip>:8080` in your browser.
 
-
 2.  **Unlock Jenkins**:
     Retrieve the initial administrator password from the Jenkins pod logs:
     First, get the Jenkins pod name:
