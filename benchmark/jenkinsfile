@@ -1,0 +1,147 @@
+pipeline {
+    agent {
+        kubernetes {
+            // This tells Jenkins to run the pipeline on an agent pod managed by the Kubernetes plugin.
+            // Ensure your Jenkins Kubernetes cloud configuration is correctly set up.
+            // If you have a specific name for your Kubernetes cloud configuration in Jenkins,
+            // you can specify it using: cloud 'your-cloud-name'
+            //
+            // The YAML below defines the pod where the pipeline script itself will run.
+            // This pod needs kubectl to manage the benchmark pods.
+            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  # Optional: If your Kubernetes cloud in Jenkins is configured to use a specific service account
+  # or if the default service account in the agent namespace lacks permissions to manage pods,
+  # you might need to specify a serviceAccountName that has the required permissions.
+  # The 'jenkins-admin' service account is defined in your workspace's serviceAccount.yaml.
+  # serviceAccountName: jenkins-admin
+  containers:
+  - name: main
+    image: bitnami/kubectl:latest # An image that includes kubectl
+    command:
+    - "sleep" # Corrected: command is a list, 'sleep' is an item
+    args:
+    - "infinity" # Corrected: args is a list, 'infinity' is an item
+    tty: true
+'''
+            defaultContainer 'main' // Ensures pipeline steps run in the 'main' container by default
+        }
+    }
+    parameters {
+        string(name: 'NUM_PODS', defaultValue: '5', description: 'Number of pods to create for the benchmark')
+        string(name: 'POD_IMAGE', defaultValue: 'nginx:alpine', description: 'Docker image for the pods')
+    }
+    stages {
+        stage('Benchmark Pod Creation and Deletion') {
+            steps {
+                script {
+                    def numPods = params.NUM_PODS.toInteger()
+                    def podImage = params.POD_IMAGE
+                    def podBaseName = "benchmark-pod-${UUID.randomUUID().toString().take(8)}"
+                    def creationTimestamps = [:]
+                    def deletionTimestamps = [:]
+                    def podsToCreate = [:]
+
+                    // Stage: Create Pods
+                    echo "Starting pod creation benchmark for ${numPods} pods..."
+                    long totalCreationStartTime = System.currentTimeMillis()
+
+                    // The podTemplate and node blocks below are handled by the Kubernetes plugin.
+                    // The code inside node { ... } executes on the dynamically created benchmark pods (e.g., nginx).
+                    // The sh "kubectl delete ..." commands later will be executed by the 'main' container
+                    // of the agent pod defined above, which has kubectl.
+                    for (int i = 0; i < numPods; i++) {
+                        def podName = "${podBaseName}-${i}"
+                        podsToCreate[podName] = {
+                            podTemplate(label: podName, yaml: """
+                              apiVersion: v1
+                              kind: Pod
+                              metadata:
+                                name: ${podName}
+                                labels:
+                                  benchmark: "true"
+                                  run: "${podBaseName}"
+                              spec:
+                                containers:
+                                - name: main
+                                  image: ${podImage}
+                                  command: ['sh', '-c', 'echo Pod ${podName} running; sleep 30']
+                                restartPolicy: Never
+                            """) {
+                                node(podName) {
+                                    creationTimestamps[podName] = System.currentTimeMillis()
+                                    echo "Pod ${podName} created and running."
+                                    // Keep the pod alive for a short while if needed for observation,
+                                    // or just let it finish its command.
+                                }
+                            }
+                        }
+                    }
+                    parallel podsToCreate
+
+                    long totalCreationEndTime = System.currentTimeMillis()
+                    long totalCreationTime = totalCreationEndTime - totalCreationStartTime
+                    echo "Finished creating ${numPods} pods."
+                    echo "Total time to create all pods: ${totalCreationTime / 1000} seconds."
+
+                    // Collect actual pod creation times from Kubernetes events if possible (more complex)
+                    // For simplicity, we are using the time when the 'node' block completes.
+
+                    // Stage: Delete Pods
+                    echo "Starting pod deletion benchmark..."
+                    long totalDeletionStartTime = System.currentTimeMillis()
+                    def podsToDelete = [:]
+
+                    for (int i = 0; i < numPods; i++) {
+                        def podName = "${podBaseName}-${i}"
+                        podsToDelete[podName] = {
+                            try {
+                                sh "kubectl delete pod ${podName} --ignore-not-found=true --wait=true"
+                                deletionTimestamps[podName] = System.currentTimeMillis()
+                                echo "Pod ${podName} deleted."
+                            } catch (Exception e) {
+                                echo "Failed to delete pod ${podName}: ${e.getMessage()}"
+                            }
+                        }
+                    }
+                    parallel podsToDelete
+
+                    long totalDeletionEndTime = System.currentTimeMillis()
+                    long totalDeletionTime = totalDeletionEndTime - totalDeletionStartTime
+                    echo "Finished deleting ${numPods} pods."
+                    echo "Total time to delete all pods: ${totalDeletionTime / 1000} seconds."
+
+                    echo "\\n--- Benchmark Summary ---"
+                    echo "Number of pods: ${numPods}"
+                    echo "Pod image: ${podImage}"
+                    echo "Total Pod Creation Time: ${totalCreationTime / 1000} seconds"
+                    if (numPods > 0) {
+                        echo "Average Pod Creation Time (approx.): ${(totalCreationTime / numPods) / 1000} seconds per pod"
+                    }
+                    echo "Total Pod Deletion Time: ${totalDeletionTime / 1000} seconds"
+                    if (numPods > 0) {
+                        echo "Average Pod Deletion Time (approx.): ${(totalDeletionTime / numPods) / 1000} seconds per pod"
+                    }
+                    echo "-------------------------"
+                }
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                // Cleanup any pods that might have been left over if the pipeline failed
+                // This uses a label selector to find pods created by this benchmark run.
+                // Note: This requires kubectl to be available and configured in the Jenkins agent environment.
+                def podBaseNamePattern = "benchmark-pod-${UUID.randomUUID().toString().take(8)}" // This will not match previous runs, needs careful thought for robust cleanup
+                // A better approach for cleanup would be to use a unique label for each benchmark run.
+                // For now, we rely on the explicit deletion in the stage.
+                // If kubectl is available:
+                // sh(script: "kubectl delete pods -l benchmark=true,run=${podBaseName} --ignore-not-found=true", returnStatus: true)
+                echo "Benchmark finished. Ensure kubectl is configured if post-build cleanup is required for orphaned resources."
+            }
+        }
+    }
+}
